@@ -21,8 +21,11 @@ def test_function():
     if not url:
         return jsonify({"message": "No URL provided"})
     analysis = analyze_youtube_video(url)
-    send_telegram_message(analysis['code'])
-    return jsonify({"message": "Telegram message sent"})
+    if analysis['code'] == 'none':
+        return jsonify({"error": "No code found in video"})
+    else:
+        send_telegram_message(analysis['code'])
+        return jsonify({"message": "Telegram message sent"})
 
 
 def analyze_youtube_video(youtube_url):
@@ -43,7 +46,7 @@ def analyze_youtube_video(youtube_url):
         )
 
         # Create a text part with the prompt
-        text_part = types.Part(text="""what is the t3 chat promo code in this video? output in just a dictionary (not in a code block, just a dictionary as the message. THIS IS VERY IMPORTANT: ONLY OUTPUT THE DICTIONARY AS THE MESSAGE, NOT A JSON CODE BLOCK OR ANYTHING, JUST THE DICTIONARY AS THE TEXT) with keys of \"code\", \"count\" (being how many customers can use the code), and a key for \"notes\" if there is any other information. if it doesn't exist, output code: none""")
+        text_part = types.Part(text="""what is the t3 chat promo code in this video? output in just a dictionary (not in a code block, just a dictionary as the message. THIS IS VERY IMPORTANT: ONLY OUTPUT THE DICTIONARY AS THE MESSAGE, NOT A JSON CODE BLOCK OR ANYTHING, JUST THE DICTIONARY AS THE TEXT) with keys of \"code\", \"count\" (being how many customers can use the code), and a key for \"notes\" if there is any other information. Also important: If there is no code, output the \"code\" key as \"none\" """)
 
         # Combine parts into content
         content = types.Content(parts=[youtube_part, text_part])

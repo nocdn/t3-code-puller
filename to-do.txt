@@ -1,0 +1,2 @@
+- strip time query parameter from youtube link before passing to model
+- automatically run when theo posts
