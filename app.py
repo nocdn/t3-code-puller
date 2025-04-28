@@ -4,12 +4,26 @@ from google.genai import types
 import requests
 from dotenv import load_dotenv
 import os
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 
 load_dotenv()
 
-# Initialize the Gemini client with your API key
+app = Flask(__name__)
+CORS(app)
+
 gemini_api_key = os.environ.get("GEMINI_API_KEY")
 client = genai.Client(api_key=gemini_api_key)
+
+@app.route('/test')
+def test_function():
+    url = request.args.get('url')
+    if not url:
+        return jsonify({"message": "No URL provided"})
+    analysis = analyze_youtube_video(url)
+    send_telegram_message(analysis['code'])
+    return jsonify({"message": "Telegram message sent"})
+
 
 def analyze_youtube_video(youtube_url):
     """
@@ -51,29 +65,15 @@ def analyze_youtube_video(youtube_url):
         return f"An error occurred: {str(e)}"
 
 
-def send_telegram_message(bot_token, chat_id, message):
-    url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+def send_telegram_message(message):
+    url = f"https://api.telegram.org/bot{os.environ.get('TELEGRAM_BOT_TOKEN')}/sendMessage"
     payload = {
-            "chat_id": chat_id,
+            "chat_id": os.environ.get('TELEGRAM_CHAT_ID'),
             "text": message
         }
     response = requests.post(url, data=payload)
     return response.json()
 
-def main():
-    youtube_url = input("Enter YouTube URL: ")
-    print("\nAnalyzing video, please wait...\n")
-    result = analyze_youtube_video(youtube_url)
-    print(result)
-
-    telegram_message=f"""{result['code']}"""
-    print("telegram_message:", telegram_message)
-    print(type(telegram_message))
-
-    BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
-    CHAT_ID = os.environ.get('TELEGRAM_CHAT_ID')
-    send_telegram_message(BOT_TOKEN, CHAT_ID, telegram_message)
-
 
 if __name__ == "__main__":
-    main()
+    app.run(debug=True, port=5540)
